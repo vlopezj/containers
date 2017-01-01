@@ -49,6 +49,7 @@ main = defaultMain [ testCase "lookupLT" test_lookupLT
                    , testProperty "prop_isProperSubsetOf2" prop_isProperSubsetOf2
                    , testProperty "prop_isSubsetOf" prop_isSubsetOf
                    , testProperty "prop_isSubsetOf2" prop_isSubsetOf2
+                   , testProperty "prop_Disjoint" prop_Disjoint
                    , testProperty "prop_size" prop_size
                    , testProperty "prop_findMax" prop_findMax
                    , testProperty "prop_findMin" prop_findMin
@@ -164,7 +165,7 @@ prop_MemberFromList xs
         t = fromList abs_xs
 
 {--------------------------------------------------------------------
-  Union
+  Union, Difference and Intersection
 --------------------------------------------------------------------}
 prop_UnionInsert :: Int -> IntSet -> Bool
 prop_UnionInsert x t
@@ -187,6 +188,9 @@ prop_Int :: [Int] -> [Int] -> Bool
 prop_Int xs ys
   =  toAscList (intersection (fromList xs) (fromList ys))
     == List.sort (nub ((List.intersect) (xs)  (ys)))
+
+prop_Disjoint :: IntSet -> IntSet -> Bool
+prop_Disjoint a b = a `disjoint` b == null (a `intersection` b)
 
 {--------------------------------------------------------------------
   Lists
@@ -335,3 +339,4 @@ prop_bitcount a w = bitcount_orig a w == bitcount_new a w
             go a x = go (a + 1) (x .&. (x-1))
     bitcount_new a x = a + popCount x
 #endif
+

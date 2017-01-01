@@ -99,6 +99,7 @@ module Data.IntSet.Base (
     , lookupGE
     , isSubsetOf
     , isProperSubsetOf
+    , disjoint
 
     -- * Construction
     , empty
@@ -640,6 +641,47 @@ isSubsetOf t1@(Tip kx _) (Bin p m l r)
   | otherwise      = isSubsetOf t1 r
 isSubsetOf (Tip _ _) Nil = False
 isSubsetOf Nil _         = True
+
+
+{--------------------------------------------------------------------
+  Disjoint
+--------------------------------------------------------------------}
+-- | /O(min(n,m))/. Check whether two sets are disjoint (i.e. their intersection
+--   is empty).
+disjoint :: IntSet -> IntSet -> Bool
+disjoint t1@(Bin p1 m1 l1 r1) t2@(Bin p2 m2 l2 r2)
+  | shorter m1 m2  = disjoint1
+  | shorter m2 m1  = disjoint2
+  | p1 == p2       = disjoint l1 l2 && disjoint r1 r2
+  | otherwise      = True
+  where
+    disjoint1 | nomatch p2 p1 m1  = True
+              | zero p2 m1        = disjoint l1 t2
+              | otherwise         = disjoint r1 t2
+
+    disjoint2 | nomatch p1 p2 m2  = True
+              | zero p1 m2        = disjoint t1 l2
+              | otherwise         = disjoint t1 r2
+
+disjoint t1@(Bin _ _ _ _) (Tip kx2 bm2) = disjointBM t1
+  where disjointBM (Bin p1 m1 l1 r1) | nomatch kx2 p1 m1 = True
+                                     | zero kx2 m1       = disjointBM l1
+                                     | otherwise         = disjointBM r1
+        disjointBM (Tip kx1 bm1) | kx1 == kx2 = (bm1 .&. bm2) == 0
+                                 | otherwise = True
+        disjointBM Nil = True
+
+disjoint (Bin _ _ _ _) Nil = True
+
+disjoint (Tip kx1 bm1) t2 = disjointBM t2
+  where disjointBM (Bin p2 m2 l2 r2) | nomatch kx1 p2 m2 = True
+                                     | zero kx1 m2       = disjointBM l2
+                                     | otherwise         = disjointBM r2
+        disjointBM (Tip kx2 bm2) | kx1 == kx2 = (bm1 .&. bm2) == 0
+                                 | otherwise = True
+        disjointBM Nil = True
+
+disjoint Nil _ = True
 
 
 {--------------------------------------------------------------------
